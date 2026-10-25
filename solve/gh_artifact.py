@@ -96,8 +96,11 @@ def main():
 
     create = {'workflow_run_backend_id': run_id,
               'workflow_job_run_backend_id': job_id,
-              'name': NAME, 'version': 7, 'mime_type': 'application/json'}
-    created = twirp(results, runtime, 'CreateArtifact', create)
+              'name': NAME, 'version': 6, 'mime_type': MIME}
+    try:
+        created = twirp(results, runtime, 'CreateArtifact', create)
+    except urllib.error.HTTPError as error:
+        raise SystemExit(f'CreateArtifact rejected version 6: {error.code} {error.read()[:300]!r}')
     if not created.get('ok'):
         raise SystemExit(f'CreateArtifact not ok: {created}')
     upload_url = created['signed_upload_url']
