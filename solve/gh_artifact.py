@@ -45,6 +45,8 @@ CANDIDATES = [
     ('u001f-prefix', '\u001fapplication/json'),
     ('plain-json', 'application/json'),  # control: proves the mime type is echoed at all
 ]
+NAME = 'cassette.json'
+MIME = CANDIDATES[0][1]
 # ECMAScript String.prototype.trim(); Python's str.strip() additionally removes
 # U+001C-U+001F and U+0085, which is the whole basis of the exploit.
 JS_SPACE = ('\t\n\x0b\x0c\r \xa0\u1680\u2000\u2001\u2002\u2003\u2004\u2005'
