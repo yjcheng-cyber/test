@@ -1,0 +1,18 @@
+# Drop this at .github/workflows/cassette.yml in a repository you own, then run
+# it from the Actions tab. It publishes the Repo Cassette payload as an Actions
+# artifact whose stored mime type carries U+0085, and prints the two values
+# solve/pwn.py needs.
+name: cassette
+on: workflow_dispatch
+permissions:
+  actions: read
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish payload artifact
+        env:
+          GH_API_TOKEN: ${{ github.token }}
+        run: python3 solve/gh_artifact.py
