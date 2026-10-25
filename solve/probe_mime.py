@@ -4,14 +4,23 @@
 import os
 import urllib.error
 
-from gh_artifact import CANDIDATES, backend_ids, twirp
+from gh_artifact import CANDIDATES, backend_ids, put_blob, twirp
+
+EXTRA = [
+    ('percent-85-suffix', 'application/json%85'),
+    ('percent-85-prefix', '%85application/json'),
+    ('percent-c285-prefix', '%C2%85application/json'),
+    ('percent-1c-prefix', '%1capplication/json'),
+    ('comma-prefix', '\u0085application/json,application/json'),
+    ('comma-suffix', 'application/json,\u0085application/json'),
+]
 
 
 def main():
     results = os.environ['ACTIONS_RESULTS_URL'].rstrip('/') + '/'
     runtime = os.environ['ACTIONS_RUNTIME_TOKEN']
     run_id, job_id = backend_ids(runtime)
-    for label, mime in CANDIDATES:
+    for label, mime in CANDIDATES + EXTRA:
         request = {
             'workflow_run_backend_id': run_id,
             'workflow_job_run_backend_id': job_id,
@@ -24,7 +33,16 @@ def main():
         except urllib.error.HTTPError as error:
             print(f'[mime-probe] {label}: HTTP {error.code} {error.read()[:180]!r}', flush=True)
         else:
-            print(f'[mime-probe] {label}: accepted={response.get("ok")}', flush=True)
+            if not response.get('ok'):
+                print(f'[mime-probe] {label}: unexpected response={response}', flush=True)
+                continue
+            put_blob(response['signed_upload_url'], b'{}', 'application/json')
+            final = twirp(results, runtime, 'FinalizeArtifact', {
+                'workflow_run_backend_id': run_id,
+                'workflow_job_run_backend_id': job_id,
+                'name': request['name'], 'size': '2',
+            })
+            print(f'[mime-probe] {label}: accepted artifact_id={final.get("artifact_id")}', flush=True)
 
 
 if __name__ == '__main__':
