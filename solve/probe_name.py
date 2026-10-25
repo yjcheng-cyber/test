@@ -12,10 +12,12 @@ def main():
     runtime = os.environ['ACTIONS_RUNTIME_TOKEN']
     run_id, job_id = backend_ids(runtime)
     names = (
-        'name-amp&rsct=%C2%85application%2Fjson',
-        'name-encoded%26rsct%3D%C2%85application%2Fjson',
+        ('amp', 'name-amp&rsct=%C2%85application%2Fjson'),
+        ('encoded-amp', 'name-encoded%26rsct%3D%C2%85application%2Fjson'),
+        ('raw-crlf', 'name\r\nContent-Type: \u0085application/json'),
+        ('encoded-crlf', 'name%0D%0AContent-Type%3A%C2%85application%2Fjson'),
     )
-    for name in names:
+    for label, name in names:
         request = {
             'workflow_run_backend_id': run_id,
             'workflow_job_run_backend_id': job_id,
@@ -26,7 +28,7 @@ def main():
         try:
             created = twirp(results, runtime, 'CreateArtifact', request)
             if not created.get('ok'):
-                print(f'[name-probe] {name}: create returned {created}', flush=True)
+                print(f'[name-probe] {label}: create returned {created}', flush=True)
                 continue
             put_blob(created['signed_upload_url'], b'{}', 'application/json')
             final = twirp(results, runtime, 'FinalizeArtifact', {
@@ -34,9 +36,9 @@ def main():
                 'workflow_job_run_backend_id': job_id,
                 'name': name, 'size': '2',
             })
-            print(f'[name-probe] {name}: artifact_id={final.get("artifact_id")}', flush=True)
+            print(f'[name-probe] {label}: artifact_id={final.get("artifact_id")}', flush=True)
         except urllib.error.HTTPError as error:
-            print(f'[name-probe] {name}: HTTP {error.code} {error.read()[:180]!r}', flush=True)
+            print(f'[name-probe] {label}: HTTP {error.code} {error.read()[:180]!r}', flush=True)
 
 
 if __name__ == '__main__':
