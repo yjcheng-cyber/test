@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Publish the Repo Cassette payload as a GitHub Actions artifact.
+"""Diagnostic publisher for the Repo Cassette artifact hypothesis.
+
+GitHub's current backend accepts U+0085 MIME only for artifact versions below
+7, whose REST download is always application/zip. This script therefore does
+not yet create an artifact usable by the remote exploit.
 
 Must run *inside* a GitHub Actions job: it needs ACTIONS_RESULTS_URL and
 ACTIONS_RUNTIME_TOKEN, which only exist there.

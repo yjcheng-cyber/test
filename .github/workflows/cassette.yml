@@ -1,7 +1,7 @@
 # Drop this at .github/workflows/cassette.yml in a repository you own, then run
-# it from the Actions tab. It publishes the Repo Cassette payload as an Actions
-# artifact whose stored mime type carries U+0085, and prints the two values
-# solve/pwn.py needs.
+# it from the Actions tab. This is a diagnostic workflow: GitHub's current
+# backend returns application/zip for the U+0085 artifact, so its output is
+# not a working remote exploit. See NOTES.md before running it again.
 name: cassette
 on: workflow_dispatch
 permissions:
