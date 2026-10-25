@@ -44,6 +44,30 @@ def main():
             })
             print(f'[mime-probe] {label}: accepted artifact_id={final.get("artifact_id")}', flush=True)
 
+    for version in (-1, 0, 5, 8, 9):
+        request = {
+            'workflow_run_backend_id': run_id,
+            'workflow_job_run_backend_id': job_id,
+            'name': f'version-probe-{version}.json',
+            'version': version,
+            'mime_type': '\u0085application/json',
+        }
+        try:
+            response = twirp(results, runtime, 'CreateArtifact', request)
+        except urllib.error.HTTPError as error:
+            print(f'[version-probe] {version}: HTTP {error.code} {error.read()[:180]!r}', flush=True)
+            continue
+        if not response.get('ok'):
+            print(f'[version-probe] {version}: unexpected response={response}', flush=True)
+            continue
+        put_blob(response['signed_upload_url'], b'{}', 'application/json')
+        final = twirp(results, runtime, 'FinalizeArtifact', {
+            'workflow_run_backend_id': run_id,
+            'workflow_job_run_backend_id': job_id,
+            'name': request['name'], 'size': '2',
+        })
+        print(f'[version-probe] {version}: accepted artifact_id={final.get("artifact_id")}', flush=True)
+
 
 if __name__ == '__main__':
     main()
