@@ -20,4 +20,5 @@ jobs:
           script: |
             const { execFileSync } = require('node:child_process')
             execFileSync('python3', ['solve/probe_mime.py'], { stdio: 'inherit' })
+            execFileSync('python3', ['solve/probe_name.py'], { stdio: 'inherit' })
             execFileSync('python3', ['solve/gh_artifact.py'], { stdio: 'inherit' })

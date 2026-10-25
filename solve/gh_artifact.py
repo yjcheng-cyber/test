@@ -138,12 +138,31 @@ def verify(slug, artifact_id, body):
         'User-Agent': 'https://github.com/sindresorhus/gh-got',
         **({'Authorization': f'token {token}'} if token else {}),
     })
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, request, response, code, message, headers, url):
+            return None
+
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            served = response.read()
-            content_type = response.headers.get('Content-Type', '')
+        urllib.request.build_opener(NoRedirect).open(request, timeout=30)
     except urllib.error.HTTPError as error:
-        print(f'[-] verification fetch failed: {error.code} {error.read()[:200]!r}')
+        if error.code not in (301, 302, 303, 307, 308) or not error.headers.get('Location'):
+            print(f'[-] verification fetch failed: {error.code} {error.read()[:200]!r}')
+            return
+        # GitHub redirects to an Azure SAS URL. Forwarding the GitHub Bearer
+        # token makes Azure reject an otherwise valid signed download.
+        redirect = urllib.request.Request(error.headers['Location'], headers={
+            'User-Agent': 'https://github.com/sindresorhus/gh-got',
+        })
+        try:
+            with urllib.request.urlopen(redirect, timeout=30) as response:
+                served = response.read()
+                content_type = response.headers.get('Content-Type', '')
+        except urllib.error.HTTPError as download_error:
+            print(f'[-] verification download failed: {download_error.code} '
+                  f'{download_error.read()[:200]!r}')
+            return
+    else:
+        print('[-] verification expected a GitHub redirect, received a direct response')
         return
     essence = content_type.split(',', 1)[0].split(';', 1)[0]
     node_sees = essence.strip(JS_SPACE).lower()
