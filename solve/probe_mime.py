@@ -68,6 +68,31 @@ def main():
         })
         print(f'[version-probe] {version}: accepted artifact_id={final.get("artifact_id")}', flush=True)
 
+    for label, value in (('omitted', None), ('null', None), ('empty', '')):
+        request = {
+            'workflow_run_backend_id': run_id,
+            'workflow_job_run_backend_id': job_id,
+            'name': f'missing-mime-{label}.json',
+            'version': 7,
+        }
+        if label != 'omitted':
+            request['mime_type'] = value
+        try:
+            response = twirp(results, runtime, 'CreateArtifact', request)
+        except urllib.error.HTTPError as error:
+            print(f'[missing-mime] {label}: HTTP {error.code} {error.read()[:180]!r}', flush=True)
+            continue
+        if not response.get('ok'):
+            print(f'[missing-mime] {label}: unexpected response={response}', flush=True)
+            continue
+        put_blob(response['signed_upload_url'], b'{}', '\u0085application/json')
+        final = twirp(results, runtime, 'FinalizeArtifact', {
+            'workflow_run_backend_id': run_id,
+            'workflow_job_run_backend_id': job_id,
+            'name': request['name'], 'size': '2',
+        })
+        print(f'[missing-mime] {label}: accepted artifact_id={final.get("artifact_id")}', flush=True)
+
 
 if __name__ == '__main__':
     main()
