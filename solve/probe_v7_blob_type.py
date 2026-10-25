@@ -61,7 +61,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-def rest_read(artifact_id):
+def rest_read(artifact_id, expected_body=BODY):
     request = urllib.request.Request(
         f'https://api.github.com/repos/{SLUG}/actions/artifacts/{artifact_id}/zip',
         headers={
@@ -80,7 +80,7 @@ def rest_read(artifact_id):
         rsct = urllib.parse.parse_qs(urllib.parse.urlsplit(location).query).get('rsct')
     try:
         with urllib.request.urlopen(urllib.request.Request(location), timeout=30) as response:
-            return f'rsct={rsct!r} type={response.headers.get("Content-Type")!r} body_match={response.read() == BODY}'
+            return f'rsct={rsct!r} type={response.headers.get("Content-Type")!r} body_match={response.read() == expected_body}'
     except urllib.error.HTTPError as error:
         return f'download {error.code}'
 
