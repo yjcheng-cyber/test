@@ -1,4 +1,4 @@
-# Diagnostic workflow for artifact CreateArtifact field parsing.
+# Diagnostic workflow for same-name artifact version recreation.
 name: cassette
 on: workflow_dispatch
 permissions:
@@ -9,11 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Probe CreateArtifact fields
+      - name: Probe artifact version recreation
         uses: actions/github-script@v8
         env:
           GH_API_TOKEN: ${{ github.token }}
         with:
           script: |
             const { execFileSync } = require('node:child_process')
-            execFileSync('python3', ['solve/probe_artifact_fields.py'], { stdio: 'inherit' })
+            execFileSync('python3', ['solve/probe_version_recreate.py'], { stdio: 'inherit' })
