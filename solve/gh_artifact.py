@@ -96,20 +96,12 @@ def main():
 
     create = {'workflow_run_backend_id': run_id,
               'workflow_job_run_backend_id': job_id,
-              'name': NAME, 'version': 7, 'mime_type': MIME}
-    try:
-        created = twirp(results, runtime, 'CreateArtifact', create)
-    except urllib.error.HTTPError as error:
-        # protobuf-ts emits google.protobuf.StringValue as a bare string, but
-        # fall back to the wrapper object shape if the backend wants it.
-        print(f'[!] CreateArtifact with a bare mime_type failed: '
-              f'{error.code} {error.read()[:200]!r}')
-        create['mime_type'] = {'value': MIME}
-        created = twirp(results, runtime, 'CreateArtifact', create)
+              'name': NAME, 'version': 7, 'mime_type': 'application/json'}
+    created = twirp(results, runtime, 'CreateArtifact', create)
     if not created.get('ok'):
         raise SystemExit(f'CreateArtifact not ok: {created}')
     upload_url = created['signed_upload_url']
-    print(f'[*] created artifact {NAME!r} with mime_type {MIME!r}')
+    print(f'[*] created artifact {NAME!r} with metadata mime_type {create["mime_type"]!r}')
 
     placeholder = b' ' * payload.SIZE
     print(f'[*] placeholder upload: HTTP {put_blob(upload_url, placeholder, MIME)}')
